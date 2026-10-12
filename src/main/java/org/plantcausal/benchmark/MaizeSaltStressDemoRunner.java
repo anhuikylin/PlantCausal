@@ -9,35 +9,38 @@ package org.plantcausal.benchmark;
 public class MaizeSaltStressDemoRunner {
 
     public void run() {
-        loadDemoPackage();
-        validatePackage();
-        generateDAG();
-        runOLS();
-        calculateInference();
-        exportReport();
+        DemoContext context = loadDemoPackage();
+        validatePackage(context);
+        generateDAG(context);
+        runOLS(context);
+        calculateInference(context);
+        exportReport(context);
     }
 
-    private void loadDemoPackage() {
+    private DemoContext loadDemoPackage() {
         System.out.println("Loading maize salt stress benchmark package");
+        return new DemoContext("maize_salt_stress");
     }
 
-    private void validatePackage() {
-        System.out.println("Validating PlantCausal package");
+    private void validatePackage(DemoContext context) {
+        System.out.println("Validating PlantCausal package: " + context.name());
     }
 
-    private void generateDAG() {
-        System.out.println("Generating causal DAG");
+    private void generateDAG(DemoContext context) {
+        System.out.println("Generating causal DAG for: " + context.name());
     }
 
-    private void runOLS() {
+    private void runOLS(DemoContext context) {
         System.out.println("Running covariate adjustment OLS model");
     }
 
-    private void calculateInference() {
+    private void calculateInference(DemoContext context) {
         System.out.println("Calculating confidence intervals and p-values");
     }
 
-    private void exportReport() {
-        System.out.println("Exporting causal report");
+    private void exportReport(DemoContext context) {
+        System.out.println("Exporting causal report for: " + context.name());
     }
+
+    public record DemoContext(String name) {}
 }
