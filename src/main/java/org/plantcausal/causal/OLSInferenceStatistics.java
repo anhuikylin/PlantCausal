@@ -12,7 +12,7 @@ public class OLSInferenceStatistics {
     public double[] tStatistics(double[] beta, double[] se) {
         double[] t = new double[beta.length];
         for (int i=0;i<beta.length;i++) {
-            t[i] = se[i] == 0 ? 0 : beta[i] / se[i];
+            t[i] = new OLSStatisticalInferenceEngine().tStatistic(beta[i],se[i]);
         }
         return t;
     }

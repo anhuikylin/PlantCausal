@@ -1,6 +1,12 @@
 package org.plantcausal.causal;
 
 public class OLSStatisticalReport {
+    private double[] coefficients;
+    private int sampleSize;
+    private String diagnostics;
+    public double[] getCoefficients(){return coefficients;} public void setCoefficients(double[] v){coefficients=v;}
+    public int getSampleSize(){return sampleSize;} public void setSampleSize(int v){sampleSize=v;}
+    public String getDiagnostics(){return diagnostics;} public void setDiagnostics(String v){diagnostics=v;}
     private double coefficient;
     private double standardError;
     private double tStatistic;

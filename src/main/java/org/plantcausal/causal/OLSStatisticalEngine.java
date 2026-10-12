@@ -1,30 +1,10 @@
 package org.plantcausal.causal;
-
-/**
- * Statistical engine for ordinary least squares based causal adjustment.
- * Provides a unified entry point for coefficient estimation,
- * residual diagnostics and model statistics.
- */
+/** Compatibility report facade; treatment column is column 1 after the intercept. */
 public class OLSStatisticalEngine {
-
-    public OLSStatisticalReport fit(double[][] x, double[] y) {
-        OLSStatisticalReport report = new OLSStatisticalReport();
-
-        report.setSampleSize(y == null ? 0 : y.length);
-        report.setDiagnostics("OLS regression fitted with covariate adjustment framework");
-
-        if (x == null || y == null || y.length == 0) {
-            report.setDiagnostics("Empty design matrix or response vector");
-            return report;
-        }
-
-        // Placeholder for matrix decomposition implementation.
-        // The API is separated so future solvers can provide QR/SVD based estimation.
-        report.setCoefficient(0.0);
-        report.setStandardError(0.0);
-        report.setPValue(1.0);
-        report.setRSquared(0.0);
-
-        return report;
-    }
+ public OLSStatisticalReport fit(double[][] x,double[] y) {
+  var r=new OLSStatisticalInferenceEngine().fit(x,y); int j=x[0].length>1?1:0;
+  var report=new OLSStatisticalReport();report.setCoefficients(r.coefficients());report.setSampleSize(y.length);
+  report.setCoefficient(r.coefficients()[j]);report.setStandardError(r.standardErrors()[j]);report.setTStatistic(r.tStatistics()[j]);report.setPValue(r.pValues()[j]);report.setRSquared(r.rSquared());
+  report.setDiagnostics("OLS fitted; causal identification not assessed");return report;
+ }
 }

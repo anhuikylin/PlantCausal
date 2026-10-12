@@ -1,18 +1,11 @@
 package org.plantcausal.report;
-
-import java.io.File;
-import java.io.IOException;
-
-/**
- * PDF export integration layer.
- * The implementation keeps report generation independent from analysis logic.
- */
+import java.io.*;
+import java.util.*;
 public class PdfBoxReportExporter {
-    public File export(CausalReport report, File output) throws IOException {
-        if (report == null || output == null) {
-            throw new IllegalArgumentException("Report and output are required");
-        }
-        // PDFBox backend is connected here in the next integration step.
-        return output;
-    }
+ public File export(CausalReport report,File output) throws IOException {
+  if(report==null||output==null) throw new IllegalArgumentException("Report and output are required");
+  List<String> lines=new ArrayList<>(List.of("PlantCausal report","Benchmark: "+report.getBenchmarkId(),"Model: "+report.getModel()));
+  report.getStatistics().forEach((key,value)->lines.add(key+": "+value));
+  new PdfBoxCausalReportGenerator().write(output.toPath(),lines);return output;
+ }
 }

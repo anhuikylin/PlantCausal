@@ -13,8 +13,6 @@ public class OLSConfidenceInterval {
     }
 
     public double twoSidedPValue(double tStatistic, int degreesOfFreedom) {
-        // Placeholder distribution adapter.
-        // Student-t implementation will be provided by the statistics module.
-        return Double.NaN;
+        return org.plantcausal.math.ExactStudentTDistribution.twoSidedP(tStatistic,degreesOfFreedom);
     }
 }

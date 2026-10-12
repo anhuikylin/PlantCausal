@@ -1,24 +1,24 @@
 package org.plantcausal.causal;
-
-/**
- * Numerical validation tests for Student-t inference.
- */
-public class StudentTDistributionTest {
-
-    public static void main(String[] args) {
-        ExactStudentTDistributionEngine engine = new ExactStudentTDistributionEngine();
-
-        double p0 = engine.twoSidedPValue(0.0, 10);
-        double pLarge = engine.twoSidedPValue(5.0, 10);
-
-        if (Math.abs(p0 - 1.0) > 1e-6) {
-            throw new RuntimeException("Student-t p-value validation failed at t=0");
-        }
-
-        if (!(pLarge < p0)) {
-            throw new RuntimeException("Student-t tail probability validation failed");
-        }
-
-        System.out.println("Student-t validation passed");
-    }
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+class StudentTDistributionTest {
+ @Test void allLegacyDistributionAdaptersUseSameNumerics() {
+  var exact=new ExactStudentTDistribution();
+  for(int df:new int[]{1,2,5,10,30,100}) for(double t:new double[]{0,.1,1,2,5,20}) {
+   double reference=exact.twoSidedPValue(t,df);
+   assertEquals(reference,new StudentTDistribution().twoSidedPValue(t,df),1e-12);
+   assertEquals(reference,new ExactStudentTCalculator().twoSidedPValue(t,df),1e-12);
+   assertEquals(reference,new StudentTCDFEngine().twoSidedPValue(t,df),1e-12);
+   assertEquals(reference,new ExactStudentTDistributionEngine().twoSidedPValue(t,df),1e-12);
+   assertEquals(reference,new OLSConfidenceInterval().twoSidedPValue(t,df),1e-12);
+  }
+ }
+ @Test void cauchySpecialCaseIsAnalytic() {
+  var d=new ExactStudentTDistribution();
+  for(double t:new double[]{-10,-1,-.1,0,.1,1,10}) assertEquals(.5+Math.atan(t)/Math.PI,d.cdf(t,1),1e-12);
+ }
+ @Test void rejectsInvalidDistributionParameters() {
+  assertThrows(IllegalArgumentException.class,()->new ExactStudentTDistribution().twoSidedPValue(1,0));
+  assertThrows(IllegalArgumentException.class,()->new ExactStudentTDistribution().twoSidedPValue(Double.NaN,1));
+ }
 }

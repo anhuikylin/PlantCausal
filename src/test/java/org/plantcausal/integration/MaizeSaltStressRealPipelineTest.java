@@ -1,20 +1,14 @@
 package org.plantcausal.integration;
-
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import java.nio.file.*;
+import org.plantcausal.core.Main;
 import static org.junit.jupiter.api.Assertions.*;
-
-public class MaizeSaltStressRealPipelineTest {
-
-    @Test
-    public void runMaizeSaltStressWorkflow() {
-        assertDoesNotThrow(() -> {
-            // LOAD DEMO
-            // PARSE TSV
-            // VALIDATE
-            // BUILD DAG
-            // RUN OLS
-            // CALCULATE p-value / CI
-            // EXPORT PDF REPORT
-        });
-    }
+class MaizeSaltStressRealPipelineTest {
+ @TempDir Path temporary;
+ @Test void cliExportsDemoReport() throws Exception {
+  Path report=temporary.resolve("cli.pdf");
+  Main.main(new String[]{"demo-maize","benchmark/examples/maize_salt_stress",report.toString()});
+  assertTrue(Files.size(report)>1000);
+ }
 }
