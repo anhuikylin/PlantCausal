@@ -6,7 +6,7 @@ Validated on 2026-10-13 (Asia/Shanghai), Linux, Java 17, Maven 3.9.9.
 
 `mvn clean verify` / `mvn verify`: executable shaded JAR built successfully. This environment's Java runtime lacks `javac`, so local Maven used a forked Eclipse Java 17 compiler; CI uses a full Temurin JDK 17 with the standard Maven compiler. Maven network access used the environment's proxy. These runtime workarounds are not included in application code.
 
-73 tests passed, 0 failures, 0 errors, 0 skipped in the final test run. Coverage includes:
+74 tests passed, 0 failures, 0 errors, 0 skipped in the final test run. Coverage includes:
 
 - 31 schema/data-logic validation tests and 3 public workbook importer tests.
 - Eight workspace tests plus a real Swing button workflow: load the estimator demo, run analysis, verify coefficients and clear displayed results when parameters change.
