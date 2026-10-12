@@ -1,8 +1,8 @@
 package org.plantcausal.causal;
 
 /**
- * Complete OLS inference calculation layer.
- * Provides residual, SSE, SST and R2 calculations.
+ * OLS statistical inference layer.
+ * Calculates residual statistics and regression uncertainty.
  */
 public class OLSStatisticalInferenceEngine {
 
@@ -20,9 +20,7 @@ public class OLSStatisticalInferenceEngine {
 
     public double sse(double[] residuals) {
         double value = 0.0;
-        for (double r : residuals) {
-            value += r * r;
-        }
+        for (double r : residuals) value += r * r;
         return value;
     }
 
@@ -33,5 +31,14 @@ public class OLSStatisticalInferenceEngine {
         double sst = 0.0;
         for (double v : y) sst += (v - mean) * (v - mean);
         return 1.0 - sse(residuals) / sst;
+    }
+
+    public double residualVariance(double[][] x, double[] residuals) {
+        int df = x.length - x[0].length;
+        return sse(residuals) / df;
+    }
+
+    public double tStatistic(double coefficient, double standardError) {
+        return coefficient / standardError;
     }
 }
