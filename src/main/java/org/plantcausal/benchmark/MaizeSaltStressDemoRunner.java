@@ -1,46 +1,44 @@
 package org.plantcausal.benchmark;
 
+import java.nio.file.Path;
+
+import org.plantcausal.validator.PlantCausalValidator;
+
 /**
  * End-to-end benchmark execution entry point for maize salt stress demo.
- *
- * Workflow:
- * Load package -> Validate -> Generate DAG -> Run OLS -> Statistics -> Report.
  */
 public class MaizeSaltStressDemoRunner {
 
     public void run() {
-        DemoContext context = loadDemoPackage();
-        validatePackage(context);
-        generateDAG(context);
-        runOLS(context);
-        calculateInference(context);
-        exportReport(context);
+        var loader = new BenchmarkPackageLoader();
+        var validator = new PlantCausalValidator();
+
+        var pkg = loader.load(Path.of("benchmark/examples/maize_salt_stress"));
+        var validation = validator.validate(pkg);
+
+        if (!validation.valid()) {
+            throw new IllegalStateException(validation.message());
+        }
+
+        generateDAG(pkg.location());
+        runOLS(pkg.location());
+        calculateInference();
+        exportReport();
     }
 
-    private DemoContext loadDemoPackage() {
-        System.out.println("Loading maize salt stress benchmark package");
-        return new DemoContext("maize_salt_stress");
+    private void generateDAG(String packageLocation) {
+        System.out.println("Generating causal DAG: " + packageLocation);
     }
 
-    private void validatePackage(DemoContext context) {
-        System.out.println("Validating PlantCausal package: " + context.name());
+    private void runOLS(String packageLocation) {
+        System.out.println("Running covariate adjustment OLS model: " + packageLocation);
     }
 
-    private void generateDAG(DemoContext context) {
-        System.out.println("Generating causal DAG for: " + context.name());
-    }
-
-    private void runOLS(DemoContext context) {
-        System.out.println("Running covariate adjustment OLS model");
-    }
-
-    private void calculateInference(DemoContext context) {
+    private void calculateInference() {
         System.out.println("Calculating confidence intervals and p-values");
     }
 
-    private void exportReport(DemoContext context) {
-        System.out.println("Exporting causal report for: " + context.name());
+    private void exportReport() {
+        System.out.println("Exporting PDF causal report");
     }
-
-    public record DemoContext(String name) {}
 }
