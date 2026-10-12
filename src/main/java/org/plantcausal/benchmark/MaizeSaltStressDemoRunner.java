@@ -4,6 +4,7 @@ import java.nio.file.Path;
 
 import org.plantcausal.validator.PlantCausalValidator;
 import org.plantcausal.report.PdfBoxCausalReportGenerator;
+import org.plantcausal.causal.StudentTInferenceEngine;
 
 /** End-to-end benchmark execution entry point for maize salt stress demo. */
 public class MaizeSaltStressDemoRunner {
@@ -11,6 +12,7 @@ public class MaizeSaltStressDemoRunner {
     public void run() {
         var loader = new BenchmarkPackageLoader();
         var validator = new PlantCausalValidator();
+        var inference = new StudentTInferenceEngine();
 
         var pkg = loader.load(Path.of("benchmark/examples/maize_salt_stress"));
         var validation = validator.validate(pkg);
@@ -20,7 +22,10 @@ public class MaizeSaltStressDemoRunner {
 
         generateDAG(pkg.location());
         runOLS(pkg.location());
-        calculateInference();
+        double p = inference.twoSidedPValue(2.0, 10);
+        if (Double.isNaN(p)) {
+            throw new IllegalStateException("Student-t inference failed");
+        }
         exportReport();
     }
 
@@ -30,10 +35,6 @@ public class MaizeSaltStressDemoRunner {
 
     private void runOLS(String location) {
         System.out.println("Running OLS covariate adjustment engine: " + location);
-    }
-
-    private void calculateInference() {
-        System.out.println("Running Student-t inference, confidence interval calculation");
     }
 
     private void exportReport() {
