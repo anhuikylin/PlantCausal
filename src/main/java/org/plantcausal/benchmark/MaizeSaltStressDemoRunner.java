@@ -38,7 +38,11 @@ public class MaizeSaltStressDemoRunner {
 
     private void exportReport() {
         try {
-            new PdfBoxCausalReportGenerator().generate(Path.of("PlantCausal_Report.pdf"));
+            Path output = Path.of("PlantCausal_Report.pdf");
+            new PdfBoxCausalReportGenerator().generate(output);
+            if (!output.toFile().exists()) {
+                throw new IllegalStateException("PDF output was not created");
+            }
         } catch (Exception e) {
             throw new RuntimeException("PDF report generation failed", e);
         }
