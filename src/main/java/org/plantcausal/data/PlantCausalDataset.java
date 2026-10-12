@@ -23,6 +23,10 @@ public class PlantCausalDataset {
         return tables;
     }
 
+    public void setTables(Map<String, Object> tables) {
+        this.tables = tables;
+    }
+
     public void addTable(String name, Object table) {
         tables.put(name, table);
     }
