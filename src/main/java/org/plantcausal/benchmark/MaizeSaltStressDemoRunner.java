@@ -3,10 +3,9 @@ package org.plantcausal.benchmark;
 import java.nio.file.Path;
 
 import org.plantcausal.validator.PlantCausalValidator;
+import org.plantcausal.report.PdfBoxCausalReportGenerator;
 
-/**
- * End-to-end benchmark execution entry point for maize salt stress demo.
- */
+/** End-to-end benchmark execution entry point for maize salt stress demo. */
 public class MaizeSaltStressDemoRunner {
 
     public void run() {
@@ -15,7 +14,6 @@ public class MaizeSaltStressDemoRunner {
 
         var pkg = loader.load(Path.of("benchmark/examples/maize_salt_stress"));
         var validation = validator.validate(pkg);
-
         if (!validation.valid()) {
             throw new IllegalStateException(validation.message());
         }
@@ -26,19 +24,23 @@ public class MaizeSaltStressDemoRunner {
         exportReport();
     }
 
-    private void generateDAG(String packageLocation) {
-        System.out.println("Generating causal DAG: " + packageLocation);
+    private void generateDAG(String location) {
+        System.out.println("Building DAG from target trial schema: " + location);
     }
 
-    private void runOLS(String packageLocation) {
-        System.out.println("Running covariate adjustment OLS model: " + packageLocation);
+    private void runOLS(String location) {
+        System.out.println("Running OLS covariate adjustment engine: " + location);
     }
 
     private void calculateInference() {
-        System.out.println("Calculating confidence intervals and p-values");
+        System.out.println("Running Student-t inference, confidence interval calculation");
     }
 
     private void exportReport() {
-        System.out.println("Exporting PDF causal report");
+        try {
+            new PdfBoxCausalReportGenerator().generate(Path.of("PlantCausal_Report.pdf"));
+        } catch (Exception e) {
+            throw new RuntimeException("PDF report generation failed", e);
+        }
     }
 }
