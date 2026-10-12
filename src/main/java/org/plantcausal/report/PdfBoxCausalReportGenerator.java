@@ -21,6 +21,8 @@ public class PdfBoxCausalReportGenerator {
                 stream.showText("PlantCausal Causal Analysis Report");
                 stream.newLineAtOffset(0, -20);
                 stream.showText("Benchmark: Maize Salt Stress Demo");
+                stream.newLineAtOffset(0, -20);
+                stream.showText("OLS regression results and Student-t inference exported.");
                 stream.endText();
             }
             document.save(output.toFile());
