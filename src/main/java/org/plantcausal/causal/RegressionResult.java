@@ -9,5 +9,6 @@ public record RegressionResult(
         double[] tStatistics,
         double[] pValues,
         double[] lower95,
-        double[] upper95
+        double[] upper95,
+        double rSquared
 ) {}
