@@ -30,11 +30,14 @@ jobs:
         run: |
           java -jar target/plantcausal-core-0.4.0.jar analyze examples/baseline_causal_verification target/aipw-verification --estimator=AIPW --missing=IPCW --covariates=baseline_x1,baseline_x2
           java -jar target/plantcausal-core-0.4.0.jar analyze examples/longitudinal_verification target/msm-verification --estimator=MSM_IPW --missing=IPCW --covariates=baseline_z --time-varying=history_l
+      - name: Record executable checksum
+        run: sha256sum target/plantcausal-core-0.4.0.jar > target/plantcausal-core-0.4.0.jar.sha256
       - uses: actions/upload-artifact@v4
         with:
           name: plantcausal-core-java17
           path: |
             target/plantcausal-core-0.4.0.jar
+            target/plantcausal-core-0.4.0.jar.sha256
             target/surefire-reports/
             target/PlantCausal_Demo_Report.pdf
             target/linear-verification/
