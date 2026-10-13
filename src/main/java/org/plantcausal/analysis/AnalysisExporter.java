@@ -27,13 +27,34 @@ public final class AnalysisExporter {
             Path json=dest.resolve("analysis.json");written.add(json);
             Files.writeString(json,PackageReader.JSON.writerWithDefaultPrettyPrinter().writeValueAsString(result)+"\n",StandardCharsets.UTF_8);
             Path table=dest.resolve("coefficients.tsv");written.add(table);
-            try(var writer=Files.newBufferedWriter(table);var csv=CSVFormat.TDF.builder().setHeader("term","estimate","standard_error","t","p","lower95","upper95").build().print(writer)) {
+            try(var writer=Files.newBufferedWriter(table);var csv=CSVFormat.TDF.builder().setHeader("term","estimate","standard_error","statistic","p","lower95","upper95").build().print(writer)) {
                 var r=result.regression();
                 for(int i=0;i<result.terms().size();i++) csv.printRecord(result.terms().get(i),r.coefficients()[i],r.standardErrors()[i],r.tStatistics()[i],r.pValues()[i],r.lower95()[i],r.upper95()[i]);
             }
             Path diagnostics=dest.resolve("diagnostics.tsv");written.add(diagnostics);
             try(var writer=Files.newBufferedWriter(diagnostics);var csv=CSVFormat.TDF.builder().setHeader("unit_id","fitted","residual").build().print(writer)) {
-                for(int i=0;i<result.sampleSize();i++) csv.printRecord(result.unitIds().get(i),result.fitted().get(i),result.residuals().get(i));
+                for(int i=0;i<result.fitted().size();i++) csv.printRecord(result.unitIds().get(i),result.fitted().get(i),result.residuals().get(i));
+            }
+            if(result.estimatorDiagnostics().containsKey("weights")) {
+                Path weightTable=dest.resolve("weights.tsv");written.add(weightTable);
+                var weights=(java.util.List<?>)result.estimatorDiagnostics().get("weights");
+                var propensity=(java.util.List<?>)result.estimatorDiagnostics().get("propensity");
+                var observation=(java.util.List<?>)result.estimatorDiagnostics().get("observationProbability");
+                try(var writer=Files.newBufferedWriter(weightTable);var csv=CSVFormat.TDF.builder().setHeader("unit_id","weight","propensity","observation_probability").build().print(writer)) {
+                    for(int i=0;i<result.sampleSize();i++)csv.printRecord(result.unitIds().get(i),weights.get(i),propensity==null?"NA":propensity.get(i),observation==null?"NA":observation.get(i));
+                }
+            }
+            if(result.estimatorDiagnostics().containsKey("propensityHistory")) {
+                Path historyTable=dest.resolve("sequential_weights.tsv");written.add(historyTable);
+                var probabilities=(java.util.List<?>)result.estimatorDiagnostics().get("propensityHistory");
+                var observation=(java.util.List<?>)result.estimatorDiagnostics().get("observationHistory");
+                var grid=(java.util.List<?>)result.estimatorDiagnostics().get("timeGrid");
+                try(var writer=Files.newBufferedWriter(historyTable);var csv=CSVFormat.TDF.builder().setHeader("unit_id","decision_time","arm_a_probability","next_observation_probability").build().print(writer)) {
+                    for(int i=0;i<result.sampleSize();i++) {
+                        var e=(java.util.List<?>)probabilities.get(i);var r=(java.util.List<?>)observation.get(i);
+                        for(int k=0;k<e.size();k++)csv.printRecord(result.unitIds().get(i),grid.get(k),e.get(k)==null?"NA":e.get(k),r.get(k)==null?"NA":r.get(k));
+                    }
+                }
             }
             Path inputs=dest.resolve("inputs");Files.createDirectory(inputs);written.add(inputs);
             for(String name:WorkspaceService.FILES) Files.copy(source.resolve(name),inputs.resolve(name));

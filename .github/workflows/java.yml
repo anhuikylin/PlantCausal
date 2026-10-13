@@ -18,19 +18,25 @@ jobs:
         run: mvn --batch-mode --no-transfer-progress verify
       - name: Validate executable and public data import
         run: |
-          java -jar target/plantcausal-core-0.3.0.jar validate examples/synthetic
-          java -jar target/plantcausal-core-0.3.0.jar import-pine benchmark/raw/10100580/Mycorrhiza_exposure_drought.xlsx "$RUNNER_TEMP/pine"
-          java -jar target/plantcausal-core-0.3.0.jar validate "$RUNNER_TEMP/pine"
-          java -jar target/plantcausal-core-0.3.0.jar stage-grass benchmark/raw/4306840/181004_Biomass_2014.xls "$RUNNER_TEMP/grass"
+          java -jar target/plantcausal-core-0.4.0.jar validate examples/synthetic
+          java -jar target/plantcausal-core-0.4.0.jar import-pine benchmark/raw/10100580/Mycorrhiza_exposure_drought.xlsx "$RUNNER_TEMP/pine"
+          java -jar target/plantcausal-core-0.4.0.jar validate "$RUNNER_TEMP/pine"
+          java -jar target/plantcausal-core-0.4.0.jar stage-grass benchmark/raw/4306840/181004_Biomass_2014.xls "$RUNNER_TEMP/grass"
       - name: Run numerical demo and export actual PDF
         run: |
-          java -jar target/plantcausal-core-0.3.0.jar demo-maize benchmark/examples/maize_salt_stress target/PlantCausal_Demo_Report.pdf
-          java -jar target/plantcausal-core-0.3.0.jar analyze examples/linear_verification target/linear-verification --covariates=baseline_x
+          java -jar target/plantcausal-core-0.4.0.jar demo-maize benchmark/examples/maize_salt_stress target/PlantCausal_Demo_Report.pdf
+          java -jar target/plantcausal-core-0.4.0.jar analyze examples/linear_verification target/linear-verification --covariates=baseline_x
+      - name: Verify baseline and longitudinal causal estimators
+        run: |
+          java -jar target/plantcausal-core-0.4.0.jar analyze examples/baseline_causal_verification target/aipw-verification --estimator=AIPW --missing=IPCW --covariates=baseline_x1,baseline_x2
+          java -jar target/plantcausal-core-0.4.0.jar analyze examples/longitudinal_verification target/msm-verification --estimator=MSM_IPW --missing=IPCW --covariates=baseline_z --time-varying=history_l
       - uses: actions/upload-artifact@v4
         with:
           name: plantcausal-core-java17
           path: |
-            target/plantcausal-core-0.3.0.jar
+            target/plantcausal-core-0.4.0.jar
             target/surefire-reports/
             target/PlantCausal_Demo_Report.pdf
             target/linear-verification/
+            target/aipw-verification/
+            target/msm-verification/

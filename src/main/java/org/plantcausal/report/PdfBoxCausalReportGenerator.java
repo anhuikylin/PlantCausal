@@ -43,22 +43,28 @@ public class PdfBoxCausalReportGenerator {
  }
  public void generateAnalysis(Path output,org.plantcausal.analysis.AnalysisService.Result result) throws IOException {
   List<String> lines=new ArrayList<>();
-  lines.add("PlantCausal 0.3.0 - Analysis Report");
+  lines.add("PlantCausal 0.4.0 - Analysis Report");
   lines.add("Trial: "+result.trialId()); lines.add("Interpretation: "+result.interpretation());
   lines.add("Identification status: "+result.identificationStatus());
   lines.add("Endpoint: "+result.outcome()+" ("+result.unit()+")");
   lines.add("Contrast: "+result.contrast()+"; first strategy minus second strategy");
-  lines.add("Estimator: additive OLS; homoskedastic errors; finite-df Student-t inference");
+  lines.add("Estimator: "+result.options().estimator());
+  lines.add("Missing outcome policy: "+result.options().missingPolicy());
+  lines.add("Inference: "+result.estimatorDiagnostics().getOrDefault("inference","Homoskedastic errors; finite-df Student-t"));
   lines.add("Input SHA-256: "+result.inputSha256());
-  lines.add(String.format(Locale.ROOT,"n=%d   first arm=%d   second arm=%d   residual df=%d   R-squared=%.6f",
-   result.sampleSize(),result.armA(),result.armB(),result.residualDf(),result.regression().rSquared()));
-  lines.add(""); lines.add("Coefficients and 95% confidence intervals");
+  lines.add(String.format(Locale.ROOT,"n=%d   first baseline arm=%d   second baseline arm=%d",result.sampleSize(),result.armA(),result.armB()));
+  lines.add(""); lines.add("Estimates and 95% confidence intervals");
   var r=result.regression();
   for(int i=0;i<result.terms().size();i++) {
    lines.add(result.terms().get(i));
-   lines.add(String.format(Locale.ROOT,"  Estimate %.6g | SE %.6g | t %.6g | p %.6g",r.coefficients()[i],r.standardErrors()[i],r.tStatistics()[i],r.pValues()[i]));
+   lines.add(String.format(Locale.ROOT,"  Estimate %.6g | SE %.6g | statistic %.6g | p %.6g",r.coefficients()[i],r.standardErrors()[i],r.tStatistics()[i],r.pValues()[i]));
    lines.add(String.format(Locale.ROOT,"  95%% CI [%.6g, %.6g]",r.lower95()[i],r.upper95()[i]));
   }
+  lines.add("");lines.add("Estimator diagnostics");
+  for(String key:List.of("effectiveSampleSize","minPropensity","maxPropensity","maxWeight","independentClusters","inferenceDf","eligibleUnits","excludedMissingEndpoints","observedEndpoints","missingEndpoints","sustainedArmA","sustainedArmB"))
+   if(result.estimatorDiagnostics().containsKey(key))lines.add(key+": "+result.estimatorDiagnostics().get(key));
+  if(Double.isFinite(r.rSquared()))lines.add("R-squared: "+r.rSquared());
+  if(result.options().estimator()==org.plantcausal.analysis.AnalysisService.Estimator.OLS)lines.add("Residual df: "+result.residualDf());
   lines.add(""); lines.add("Design and interpretation limitations");
   for(String warning:result.warnings()) lines.add(warning);
   lines.add(""); lines.add("Reproducibility files: analysis.json, coefficients.tsv, diagnostics.tsv, inputs/");

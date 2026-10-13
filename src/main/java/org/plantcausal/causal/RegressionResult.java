@@ -10,7 +10,7 @@ public record RegressionResult(
         double[] pValues,
         double[] lower95,
         double[] upper95,
-        double rSquared
+        @com.fasterxml.jackson.databind.annotation.JsonSerialize(using=org.plantcausal.report.json.FiniteDoubleSerializer.class) double rSquared
  ) {
     public RegressionResult {
         coefficients=coefficients.clone(); standardErrors=standardErrors.clone(); tStatistics=tStatistics.clone();

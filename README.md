@@ -1,62 +1,88 @@
 # PlantCausal
 
-Java 17 desktop workspace for plant target-trial protocols, standardized experimental data, design audits and reproducible fixed-endpoint analysis.
+Java 17 desktop software for plant target-trial protocols, data validation and reproducible causal effect estimation under explicit identification assumptions.
 
 ## Run
 
-Install a JDK 17+ and Maven, then:
-
 ```bash
 mvn clean verify
-java -jar target/plantcausal-core-0.3.0.jar
+java -jar target/plantcausal-core-0.4.0.jar
 ```
 
-On Windows, double-click `start-PlantCausal.bat`. The GitHub Actions artifact includes the executable JAR and verified example reports; a downloaded JAR runs with Java 17+, without Maven.
+Windows: double-click `start-PlantCausal.bat` with JDK 17+ and Maven installed. The packaged desktop ZIP or GitHub Actions executable JAR runs with Java 17+ without Maven.
 
-## Desktop workflow
+## Desktop
 
-1. Open a schema-v1 project or load built-in data.
-2. Review and save the target-trial protocol; inspect its tables.
-3. Validate identifiers, allocation levels, times, outcomes and provenance.
-4. Open **Analysis**, enter prespecified numeric baseline covariate IDs, and optionally adjust genotype or block.
-5. Run analysis, inspect coefficients, confidence intervals and residuals, then export to an empty folder outside the project.
+Open/load a project → review and save protocol → validate → **Analysis** → select estimator and missing-outcome policy → inspect estimates/weights → export to an empty folder outside the project.
 
-**Load estimator demo** opens 24 independent synthetic units. Its prespecified covariate is `baseline_x`; the known treatment coefficient is 2. This is a numerical verification fixture, not a published biological dataset.
+- **Load estimator demo**: 24 independent synthetic units, OLS with `baseline_x`.
+- **Load causal demo**: 240 synthetic units, baseline IPW/AIPW and MAR missing outcomes; defaults to AIPW + IPCW with `baseline_x1,baseline_x2`.
+- **Load longitudinal demo**: 500 synthetic units on three decisions, actual strategy switches and endpoint dropout; defaults to MSM_IPW + IPCW with `baseline_z` and history `history_l`.
+
+These are numerical verification fixtures, not published biological observations. Public pine/grassland examples remain available for source-backed import and format validation; their true causal effects are unknown.
+
+## Estimators
+
+| Method | Supported target/design | Inference |
+|---|---|---|
+| `OLS` | Additive continuous endpoint contrast, independent units | Classical homoskedastic errors, Student-t with n-p df |
+| `CLUSTER_OLS` | Same additive model, documented correlated clusters/nested allocation | CR1 sandwich, t(G-1), finite-sample factor |
+| `IPW` | Baseline binary-strategy individual-unit ATE; logistic propensity | Hájek arm means; cluster bootstrap refits propensity/observation models |
+| `AIPW` | Baseline binary-strategy individual-unit ATE; logistic propensity + separate arm outcome regressions | Augmented estimator; cluster bootstrap refits every nuisance model |
+| `MSM_IPW` | Two static sustained regimes, A at every decision versus B at every decision, continuous endpoint | Sequential treatment/observation weights, Hájek regime means; cluster bootstrap |
+
+Adjustment uses prespecified numeric baseline variables and optional genotype/block indicators. Longitudinal models use prespecified numeric baseline and time-varying histories; genotype/block indicators must be explicitly encoded as baseline variables for that method. Logistic MLE is unpenalized, with rank, convergence, separation and overlap checks.
+
+Bootstrap defaults: 300 replicates, seed 20261013, overlap threshold 0.01. At least 200 replicates and 10 independent resampling clusters are required. Failed draws are not discarded or silently replaced. Bootstrap intervals are percentile intervals; p-values use a normal Wald approximation with the bootstrap standard error. They are not exact Student-t tests. More replicates and adequate cluster counts are advisable for final studies.
+
+## Missing outcomes
+
+| Policy | Behavior and interpretation |
+|---|---|
+| `FAIL` | Reject missing endpoints/covariates |
+| `COMPLETE_CASE` | Explicitly exclude missing endpoints and report counts; selected-sample association unless extra selection assumptions justify a population effect |
+| `IPCW` | IPW/AIPW: model endpoint observation given treatment and baseline. MSM: model next retention given pre-decision history and current treatment. Requires MAR/conditional independent censoring and observation positivity |
+
+Baseline/history covariate missingness is rejected. Death-truncated outcomes are not automatically treated as ordinary MAR missingness; define a suitable estimand. Multiple imputation is not implemented.
 
 ## CLI
 
 ```bash
-java -jar target/plantcausal-core-0.3.0.jar validate examples/linear_verification
-java -jar target/plantcausal-core-0.3.0.jar analyze examples/linear_verification output/analysis --covariates=baseline_x
-java -jar target/plantcausal-core-0.3.0.jar demo-maize benchmark/examples/maize_salt_stress output/maize-demo.pdf
+java -jar target/plantcausal-core-0.4.0.jar --help
+java -jar target/plantcausal-core-0.4.0.jar validate examples/linear_verification
+java -jar target/plantcausal-core-0.4.0.jar analyze examples/linear_verification output/ols --covariates=baseline_x
+java -jar target/plantcausal-core-0.4.0.jar analyze examples/baseline_causal_verification output/aipw --estimator=AIPW --missing=IPCW --covariates=baseline_x1,baseline_x2
+java -jar target/plantcausal-core-0.4.0.jar analyze examples/longitudinal_verification output/msm --estimator=MSM_IPW --missing=IPCW --covariates=baseline_z --time-varying=history_l
 ```
 
-Analysis options: `--covariates=id1,id2`, `--genotype`, `--block`. All adjustment decisions require the study's scientific rationale; the software does not automatically select confounders. Output directories must be empty.
+Additional options: `--genotype`, `--block`, `--bootstrap=1000`, `--seed=123`, `--overlap=0.01`.
 
-Exports include `PlantCausal_Report.pdf`, `analysis.json`, `coefficients.tsv`, `diagnostics.tsv` and a complete `inputs/` snapshot. JSON retains software version, selected parameters, input SHA-256, sample IDs, contrast direction and interpretation limitations.
-
-Existing public-data import commands remain available:
+Public import commands:
 
 ```bash
-java -jar target/plantcausal-core-0.3.0.jar import-pine benchmark/raw/10100580/Mycorrhiza_exposure_drought.xlsx output/pine
-java -jar target/plantcausal-core-0.3.0.jar stage-grass benchmark/raw/4306840/181004_Biomass_2014.xls output/grass
+java -jar target/plantcausal-core-0.4.0.jar import-pine benchmark/raw/10100580/Mycorrhiza_exposure_drought.xlsx output/pine
+java -jar target/plantcausal-core-0.4.0.jar stage-grass benchmark/raw/4306840/181004_Biomass_2014.xls output/grass
 ```
 
-## Supported analysis and scientific limits
+## Longitudinal input contract
 
-Version 0.3.0 implements **additive OLS for one numeric endpoint at the protocol's primary time**, with independent analysis/allocation units, two strategy arms, numeric pre-treatment covariates and optional genotype/block fixed effects. Scaled QR fits avoid normal-equation inversion; finite-df Student-t inference uses classical homoskedastic errors. The coefficient contrasts the **first strategy minus the second**, in the outcome's original units.
+Use schema-v1 tables and define `extensions.longitudinal.time_grid`, for example `[0,30,60,90]`. Grid starts at zero and ends at the primary endpoint. At each at-risk step there must be exactly one verified actual strategy interval `[grid[k],grid[k+1]]`. First actual strategy must agree with baseline strategy. Unknown adherence is rejected.
 
-Format validation does not establish causal identification. Observational outputs are labeled associations requiring identification review; randomized outputs remain subject to design review. Synthetic examples are labeled demonstrations. A baseline assignment contrast is not relabeled as a sustained-treatment or per-protocol effect.
+For each selected history variable, provide one measurement strictly before the current decision and after the previous grid boundary; the initial measurement precedes time zero (or is explicitly declared before-first-treatment at zero). The model includes all these measured histories and all previous treatments. Post-decision values are rejected. Loss events must lie on grid boundaries. Exposure history stops after loss; retained subjects require a measured endpoint. There is no automatic survival analysis, dynamic-policy learning or censoring of deaths.
 
-Missing outcomes/covariates, duplicate endpoints or technical measurements, shared clusters, nested allocation, singular designs and unsupported effect scales are rejected. There is no silent row dropping, zero imputation, unrequested pooling or automatic confounder selection.
+## Export and reproducibility
 
-Cluster-robust inference, longitudinal treatment/censoring models, IPW/AIPW, survival endpoints and missing-data estimators are **not implemented**. These require separate algorithms and validation; this release does not claim a general-purpose causal inference engine. The maintained application is `org.plantcausal.core.Main` / `desktop.DesktopApp`; older standalone UI prototype classes are compatibility scaffolding, not application launchers.
+Outputs include PDF, `analysis.json`, `coefficients.tsv`, individual diagnostics/weights, optional `sequential_weights.tsv`, and the exact six input files. JSON preserves software version, options, input SHA-256, IDs, target contrast, fitted nuisance coefficients, probabilities, weights, bootstrap draws, ESS and scientific warnings. Inputs are rechecked during analysis and export; changed parameters clear displayed estimates.
 
-## Standards, verification and provenance
+The contrast is always first strategy minus second. OLS estimates and IPW/AIPW estimates retain their actual model/inference labels. The historical JSON property `tStatistics` contains the displayed statistic; for bootstrap methods it is a normal Wald statistic, not a Student-t statistic. Undefined/not-applicable R-squared is `null`.
+
+## Scientific limits
+
+Format validation is not causal identification. Estimates require a defensible target trial, exchangeability (sequential for MSM), positivity, consistency, appropriate nuisance/model specification, and a justified interference/cluster structure. Cluster-robust variance corrects inference for correlation; it does not remove cluster-level confounding or interference bias. Doubly robust does not mean both nuisance models can be wrong.
+
+The supported software workflow now includes baseline weighting, augmented estimation, cluster-robust inference, MAR observation weighting and static sustained-regime analysis. Dynamic regimes, survival/competing risks, multiple imputation, arbitrary multi-arm treatment, cross-fitted machine-learning nuisance models and automatic ontology/unit reconciliation remain outside scope. The maintained launcher is `org.plantcausal.core.Main` / `desktop.DesktopApp`; older standalone UI prototypes are compatibility scaffolding.
 
 - [Data standard](DATA_STANDARD.md)
-- [Scientific and implementation audit](docs/SCIENTIFIC_AUDIT.md)
-- [Current verification](docs/VERIFICATION_0.3.0.md)
-- [Public benchmark provenance](benchmark/README.md)
-
-Public benchmark datasets test import and format handling; their true causal effects are unknown. The legacy four-record maize salt example is hand-entered demo data with only one residual degree of freedom. It must not be used as evidence for a biological conclusion.
+- [Scientific audit](docs/SCIENTIFIC_AUDIT.md)
+- [0.4.0 verification](docs/VERIFICATION_0.4.0.md)
+- [Public data provenance](benchmark/README.md)

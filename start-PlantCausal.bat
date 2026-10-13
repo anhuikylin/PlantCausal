@@ -6,7 +6,7 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-if not exist "target\plantcausal-core-0.3.0.jar" (
+if not exist "target\plantcausal-core-0.4.0.jar" (
   call mvn --batch-mode --no-transfer-progress package
   if errorlevel 1 (
     echo Build failed. Open pom.xml in IntelliJ IDEA and run Main instead.
@@ -14,5 +14,5 @@ if not exist "target\plantcausal-core-0.3.0.jar" (
     exit /b 1
   )
 )
-java -jar "target\plantcausal-core-0.3.0.jar"
+java -jar "target\plantcausal-core-0.4.0.jar"
 if errorlevel 1 pause
